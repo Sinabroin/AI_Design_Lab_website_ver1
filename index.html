@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 디자인랩</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0E27;
+            color: white;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        button, a, .planet-inner, .gallery-item, .content-item {
+            -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(10, 14, 39, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .header-logo {
+            width: 140px;
+            height: 40px;
+            background: rgba(102, 126, 234, 0.12);
+            border: 2px dashed rgba(102, 126, 234, 0.35);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.5px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-menu a {
+            color: rgba(255, 255, 255, 0.72);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            letter-spacing: 0.3px;
+        }
+
+        .nav-menu a:hover {
+            color: #667EEA;
+            transform: translateY(-1px);
+        }
+
+        /* 우주 시스템 */
+        .space-container {
+            position: relative;
+            width: 100%;
+            min-height: 1400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        /* 궤도선 */
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(102, 126, 234, 0.12);
+            border-radius: 50%;
+            pointer-events: none;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, calc(-50% + var(--orbit-offset-y, 0px)));
+            opacity: 0.6;
+        }
+
+        .orbit-1 { width: 560px; height: 560px; }
+        .orbit-2 { width: 760px; height: 760px; }
+        .orbit-3 { width: 960px; height: 960px; }
+
+        /* 중앙 로고 */
+        .central-logo {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, calc(-50% + var(--orbit-offset-y, 0px)));
+            width: 160px;
+            height: 160px;
+            background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 0 60px rgba(102, 126, 234, 0.5),
+                0 0 100px rgba(102, 126, 234, 0.3),
+                0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: logoFloat 4s ease-in-out infinite;
+            z-index: 5;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translate(-50%, calc(-50% + var(--orbit-offset-y, 0px))) scale(1); }
+            50% { transform: translate(-50%, calc(-50% + var(--orbit-offset-y, 0px))) scale(1.05); }
+        }
+
+        /* 행성 */
+        .planet {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+        }
+
+        .planet-inner {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .planet:hover {
+            transform: scale(1.12);
+        }
+
+        .planet:hover .planet-inner {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(102, 126, 234, 0.6);
+            box-shadow: 
+                0 0 30px rgba(102, 126, 234, 0.4),
+                0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .planet-icon {
+            font-size: 44px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .planet-title {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .planet-desc {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.5px;
+        }
+
+        /* 푸터 */
+        .footer {
+            position: relative;
+            padding: 70px 0 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .footer-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 48px;
+            font-weight: 200;
+            color: rgba(100, 100, 100, 0.35);
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .footer-text:hover {
+            color: rgba(120, 120, 120, 0.55);
+            letter-spacing: 0.12em;
+        }
+
+        .footer-text span {
+            display: inline-block;
+            transition: transform 0.12s ease-out;
+        }
+
+        /* 모달 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 39, 0.98);
+            z-index: 9999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 14, 39, 0.96);
+            backdrop-filter: blur(12px);
+            padding: 32px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .modal-close {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: rotate(90deg);
+        }
+
+        .gallery-grid-view {
+            padding: 60px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 32px;
+        }
+
+        .gallery-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .gallery-item:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 
+                0 0 30px rgba(102, 126, 234, 0.2),
+                0 20px 60px rgba(0, 0, 0, 0.4);
+            transform: translateY(-6px);
+        }
+
+        .gallery-item-image {
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(135deg, #667EEA, #764BA2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .gallery-item:hover .gallery-item-image {
+            transform: scale(1.05);
+        }
+
+        .gallery-item-content {
+            padding: 26px;
+            cursor: pointer;
+        }
+
+        .gallery-item-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+
+        .gallery-item-author {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+        }
+
+        .gallery-item-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+        }
+
+        /* 자연스러운 액션 바 (pill 버튼 스타일) */
+        .item-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 18px;
+            padding: 0 26px 22px 26px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 22px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.75);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            letter-spacing: 0.2px;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(102, 126, 234, 0.5);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.active {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.5);
+            color: #93C5FD;
+        }
+
+        .action-icon {
+            font-size: 17px;
+            line-height: 1;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .action-btn:hover .action-icon {
+            transform: scale(1.15);
+        }
+
+        .action-count {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        /* 슬라이드 뷰 */
+        .slide-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 10000;
+            display: none;
+        }
+
+        .slide-view.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-container {
+            max-width: 900px;
+            width: 90%;
+            height: 80vh;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slide-close {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+
+        .slide-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .slide-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 60px;
+            text-align: center;
+        }
+
+        .slide-image {
+            width: 250px;
+            height: 250px;
+            background: linear-gradient(135deg, #667EEA, #764BA2);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 100px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .slide-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .slide-author {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 24px;
+        }
+
+        .slide-description {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.7;
+        }
+
+        .slide-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 36px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .slide-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .slide-action-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(102, 126, 234, 0.6);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .slide-action-btn.active {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.6);
+            color: #93C5FD;
+        }
+
+        .slide-action-btn .action-icon {
+            font-size: 20px;
+        }
+
+        .slide-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slide-nav:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .slide-nav.prev { left: 24px; }
+        .slide-nav.next { right: 24px; }
+
+        /* 콘텐츠 뷰 */
+        .content-view {
+            padding: 60px 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .content-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .content-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 28px 32px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .content-item:hover {
+            border-color: rgba(102, 126, 234, 0.4);
+            transform: translateX(4px);
+        }
+
+        .content-item-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .content-item-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        .content-item-date {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .content-item-desc {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .content-item-meta {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .content-tag {
+            padding: 5px 14px;
+            background: rgba(102, 126, 234, 0.18);
+            border-radius: 14px;
+            font-size: 12px;
+            color: #93C5FD;
+            letter-spacing: 0.3px;
+        }
+
+        /* 폼 */
+        .form-container {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 42px;
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 26px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .form-textarea {
+            min-height: 130px;
+            resize: vertical;
+        }
+
+        .form-button {
+            padding: 15px 36px;
+            background: linear-gradient(135deg, #667EEA, #764BA2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .form-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .form-button:active {
+            transform: translateY(0);
+        }
+
+        /* 반응형 - 태블릿 */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 20px 28px;
+            }
+
+            .nav-menu {
+                gap: 22px;
+            }
+
+            .nav-menu a {
+                font-size: 13px;
+            }
+
+            .planet {
+                width: 120px;
+                height: 120px;
+            }
+
+            .planet-icon {
+                font-size: 36px;
+            }
+
+            .planet-title {
+                font-size: 13px;
+            }
+
+            .planet-desc {
+                font-size: 9px;
+            }
+
+            .central-logo {
+                width: 130px;
+                height: 130px;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 26px;
+            }
+
+            .modal-header {
+                padding: 26px 32px;
+            }
+
+            .modal-title {
+                font-size: 28px;
+            }
+
+            .gallery-grid-view {
+                padding: 50px 32px;
+            }
+
+            .content-view {
+                padding: 50px 32px;
+            }
+
+            .footer-text {
+                font-size: 40px;
+            }
+        }
+
+        /* 반응형 - 모바일 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 18px 24px;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .header-logo {
+                width: 110px;
+                height: 34px;
+                font-size: 10px;
+            }
+
+            .nav-menu {
+                gap: 14px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-menu a {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+
+            .space-container {
+                min-height: 1200px;
+            }
+
+            .planet {
+                width: 100px;
+                height: 100px;
+            }
+
+            .planet-inner {
+                padding: 14px;
+            }
+
+            .planet-icon {
+                font-size: 28px;
+                margin-bottom: 7px;
+            }
+
+            .planet-title {
+                font-size: 11px;
+                margin-bottom: 3px;
+            }
+
+            .planet-desc {
+                font-size: 8px;
+            }
+
+            .central-logo {
+                width: 100px;
+                height: 100px;
+            }
+
+            .orbit-1 { width: 220px; height: 220px; }
+            .orbit-2 { width: 320px; height: 320px; }
+            .orbit-3 { width: 420px; height: 420px; }
+
+            .modal-header {
+                padding: 22px 24px;
+            }
+
+            .modal-title {
+                font-size: 24px;
+            }
+
+            .modal-close {
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
+
+            .gallery-grid-view {
+                padding: 40px 24px;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+
+            .gallery-item-image {
+                height: 200px;
+                font-size: 60px;
+            }
+
+            .gallery-item-content {
+                padding: 22px;
+            }
+
+            .gallery-item-title {
+                font-size: 18px;
+            }
+
+            .item-actions {
+                padding: 0 22px 20px 22px;
+            }
+
+            .content-view {
+                padding: 40px 24px;
+            }
+
+            .content-item {
+                padding: 24px;
+            }
+
+            .content-item-title {
+                font-size: 18px;
+            }
+
+            .slide-container {
+                width: 95%;
+                height: 85vh;
+            }
+
+            .slide-content {
+                padding: 60px 32px;
+            }
+
+            .slide-image {
+                width: 180px;
+                height: 180px;
+                font-size: 80px;
+                margin-bottom: 32px;
+            }
+
+            .slide-title {
+                font-size: 28px;
+            }
+
+            .slide-author {
+                font-size: 14px;
+            }
+
+            .slide-description {
+                font-size: 16px;
+            }
+
+            .slide-nav {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+
+            .slide-nav.prev { left: 12px; }
+            .slide-nav.next { right: 12px; }
+
+            .slide-actions {
+                gap: 12px;
+            }
+
+            .slide-action-btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            .item-actions {
+                gap: 12px;
+            }
+
+            .action-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .form-container {
+                padding: 32px 24px;
+            }
+
+            .form-group {
+                margin-bottom: 22px;
+            }
+
+            .form-label {
+                font-size: 13px;
+            }
+
+            .form-input, .form-textarea {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .form-button {
+                width: 100%;
+                padding: 13px 28px;
+            }
+
+            .footer {
+                padding: 50px 0 40px;
+            }
+
+            .footer-text {
+                font-size: 32px;
+            }
+        }
+
+        /* 반응형 - 작은 모바일 */
+        @media (max-width: 480px) {
+            .header {
+                padding: 14px 20px;
+            }
+
+            .nav-menu a {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+
+            .planet {
+                width: 80px;
+                height: 80px;
+            }
+
+            .planet-inner {
+                padding: 10px;
+            }
+
+            .planet-icon {
+                font-size: 22px;
+                margin-bottom: 5px;
+            }
+
+            .planet-title {
+                font-size: 10px;
+            }
+
+            .planet-desc {
+                font-size: 7px;
+            }
+
+            .central-logo {
+                width: 80px;
+                height: 80px;
+            }
+
+            .orbit-1 { width: 180px; height: 180px; }
+            .orbit-2 { width: 260px; height: 260px; }
+            .orbit-3 { width: 340px; height: 340px; }
+
+            .modal-title {
+                font-size: 20px;
+            }
+
+            .gallery-item-image {
+                height: 160px;
+                font-size: 50px;
+            }
+
+            .slide-image {
+                width: 140px;
+                height: 140px;
+                font-size: 60px;
+            }
+
+            .slide-title {
+                font-size: 22px;
+            }
+
+            .slide-description {
+                font-size: 14px;
+            }
+
+            .footer-text {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <!-- 헤더 -->
+    <div class="header">
+        <div class="header-logo" id="headerLogo">
+            로고 영역
+        </div>
+        <ul class="nav-menu">
+            <li><a onclick="openGalleryModal('ai-gallery')">AI 갤러리</a></li>
+            <li><a onclick="openGalleryModal('card-news')">카드뉴스</a></li>
+            <li><a onclick="openContentModal('board')">게시판</a></li>
+            <li><a onclick="openGalleryModal('play-day')">Play Day</a></li>
+            <li><a onclick="openContentModal('help-ace')">도와줘요 ACE!</a></li>
+            <li><a onclick="openContentModal('playbook')">Playbook</a></li>
+        </ul>
+    </div>
+
+    <!-- 우주 시스템 -->
+    <div class="space-container">
+        <!-- 궤도선 -->
+        <div class="orbit orbit-1"></div>
+        <div class="orbit orbit-2"></div>
+        <div class="orbit orbit-3"></div>
+
+        <!-- 중앙 로고 -->
+        <div class="central-logo" id="centralLogo"></div>
+
+        <!-- 행성들 -->
+        <div class="planet" id="planet0">
+            <div class="planet-inner" onclick="openGalleryModal('ai-gallery')">
+                <div class="planet-icon">🎨</div>
+                <div class="planet-title">AI 갤러리</div>
+                <div class="planet-desc">ACE 전용</div>
+            </div>
+        </div>
+
+        <div class="planet" id="planet1">
+            <div class="planet-inner" onclick="openGalleryModal('card-news')">
+                <div class="planet-icon">📰</div>
+                <div class="planet-title">카드뉴스</div>
+                <div class="planet-desc">AI 트렌드</div>
+            </div>
+        </div>
+
+        <div class="planet" id="planet2">
+            <div class="planet-inner" onclick="openContentModal('board')">
+                <div class="planet-icon">📋</div>
+                <div class="planet-title">게시판</div>
+                <div class="planet-desc">공지사항</div>
+            </div>
+        </div>
+
+        <div class="planet" id="planet3">
+            <div class="planet-inner" onclick="openGalleryModal('play-day')">
+                <div class="planet-icon">🎮</div>
+                <div class="planet-title">Play Day</div>
+                <div class="planet-desc">격주 실험</div>
+            </div>
+        </div>
+
+        <div class="planet" id="planet4">
+            <div class="planet-inner" onclick="openContentModal('help-ace')">
+                <div class="planet-icon">🆘</div>
+                <div class="planet-title">도와줘요 ACE!</div>
+                <div class="planet-desc">AI 지원</div>
+            </div>
+        </div>
+
+        <div class="planet" id="planet5">
+            <div class="planet-inner" onclick="openContentModal('playbook')">
+                <div class="planet-icon">📚</div>
+                <div class="planet-title">Playbook</div>
+                <div class="planet-desc">월간 가이드</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="footer">
+        <div class="footer-text" id="footerText">AI Design Lab</div>
+    </div>
+
+    <!-- 모달들 -->
+    <div class="modal" id="galleryModal">
+        <div class="modal-header">
+            <div class="modal-title" id="galleryModalTitle"></div>
+            <button class="modal-close" onclick="closeModal('galleryModal')">✕</button>
+        </div>
+        <div class="gallery-grid-view">
+            <div class="gallery-grid" id="galleryGrid"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="contentModal">
+        <div class="modal-header">
+            <div class="modal-title" id="contentModalTitle"></div>
+            <button class="modal-close" onclick="closeModal('contentModal')">✕</button>
+        </div>
+        <div class="content-view" id="contentView"></div>
+    </div>
+
+    <div class="slide-view" id="slideView">
+        <div class="slide-container">
+            <button class="slide-close" onclick="closeSlideView()">✕</button>
+            <div class="slide-content" id="slideContent"></div>
+            <button class="slide-nav prev" onclick="prevSlide()">‹</button>
+            <button class="slide-nav next" onclick="nextSlide()">›</button>
+        </div>
+    </div>
+
+    <script>
+        // 캔버스 설정
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        // Antigravity 파티클
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.baseX = this.x;
+                this.baseY = this.y;
+                this.vx = 0;
+                this.vy = 0;
+                this.radius = Math.random() * 2.5 + 0.5;
+                this.color = this.getColor();
+            }
+
+            getColor() {
+                const colors = [
+                    '#667EEA', '#764BA2', '#8B5CF6', '#3B82F6', '#93C5FD',
+                    '#A78BFA', '#60A5FA', '#38BDF8', '#22D3EE', '#E0E7FF'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                const dx = this.x - mouseX;
+                const dy = this.y - mouseY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 150) {
+                    const force = (150 - distance) / 150;
+                    this.vx += (dx / distance) * force * 2;
+                    this.vy += (dy / distance) * force * 2;
+                }
+                else if (distance < 400) {
+                    const attractForce = (distance - 150) / 400;
+                    this.vx += (-dx / distance) * attractForce * 0.5;
+                    this.vy += (-dy / distance) * attractForce * 0.5;
+                }
+
+                const returnForceX = (this.baseX - this.x) * 0.01;
+                const returnForceY = (this.baseY - this.y) * 0.01;
+                this.vx += returnForceX;
+                this.vy += returnForceY;
+
+                this.vx *= 0.95;
+                this.vy *= 0.95;
+
+                this.x += this.vx;
+                this.y += this.vy;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        for (let i = 0; i < 360; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            particles.forEach((p1, i) => {
+                particles.slice(i + 1, i + 5).forEach(p2 => {
+                    const dx = p1.x - p2.x;
+                    const dy = p1.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(102, 126, 234, ${0.3 * (1 - dist / 100)})`;
+                        ctx.lineWidth = 1;
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                });
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // 행성 궤도 시스템
+        let globalCenterX = window.innerWidth / 2;
+        let globalCenterY = window.innerHeight / 2;
+
+        class PlanetOrbit {
+            constructor(element, orbitRadius, speed, startAngle) {
+                this.element = element;
+                this.orbitRadius = orbitRadius;
+                this.speed = speed;
+                this.angle = startAngle;
+            }
+
+            update() {
+                this.angle += this.speed;
+                
+                // 모바일에서 행성 크기 동적 계산
+                const width = window.innerWidth;
+                let planetRadius;
+                if (width <= 480) {
+                    planetRadius = 40; // 80px / 2
+                } else if (width <= 768) {
+                    planetRadius = 50; // 100px / 2
+                } else if (width <= 1024) {
+                    planetRadius = 60; // 120px / 2
+                } else {
+                    planetRadius = 75; // 150px / 2
+                }
+                
+                let x = globalCenterX + Math.cos(this.angle) * this.orbitRadius - planetRadius;
+                let y = globalCenterY + Math.sin(this.angle) * this.orbitRadius - planetRadius;
+                
+                // 화면 밖으로 나가지 않도록 제한
+                const margin = 20;
+                const planetSize = planetRadius * 2;
+                x = Math.max(margin, Math.min(x, window.innerWidth - planetSize - margin));
+                y = Math.max(margin, Math.min(y, window.innerHeight - planetSize - margin));
+                
+                this.element.style.left = x + 'px';
+                this.element.style.top = y + 'px';
+            }
+        }
+
+        function getOrbitRadii() {
+            const width = window.innerWidth;
+            if (width <= 480) {
+                return [70, 110, 150];
+            } else if (width <= 768) {
+                return [90, 140, 190];
+            } else if (width <= 1024) {
+                return [200, 280, 360];
+            } else {
+                return [280, 380, 480];
+            }
+        }
+
+        const radii = getOrbitRadii();
+        const planetOrbits = [
+            new PlanetOrbit(document.getElementById('planet0'), radii[0], 0.006, 0),
+            new PlanetOrbit(document.getElementById('planet1'), radii[0], 0.006, Math.PI),
+            new PlanetOrbit(document.getElementById('planet2'), radii[1], 0.005, Math.PI / 3),
+            new PlanetOrbit(document.getElementById('planet3'), radii[1], 0.005, Math.PI / 3 * 4),
+            new PlanetOrbit(document.getElementById('planet4'), radii[2], 0.004, Math.PI / 3 * 2),
+            new PlanetOrbit(document.getElementById('planet5'), radii[2], 0.004, Math.PI / 3 * 5)
+        ];
+
+        function updateOrbitalCenter() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // 헤더 높이 고려
+            const header = document.querySelector('.header');
+            const headerHeight = header ? header.offsetHeight : 80;
+            
+            // 중앙 로고 크기 고려
+            let logoSize;
+            if (width <= 480) {
+                logoSize = 80;
+            } else if (width <= 768) {
+                logoSize = 100;
+            } else if (width <= 1024) {
+                logoSize = 130;
+            } else {
+                logoSize = 160;
+            }
+            
+            // 모바일에서는 화면 중앙을 기준으로 설정
+            globalCenterX = width / 2;
+            
+            if (width <= 768) {
+                // 모바일/태블릿: 헤더 아래 적절한 위치
+                const maxOrbitRadius = getOrbitRadii()[2];
+                const topPadding = headerHeight + 40;
+                const requiredSpace = maxOrbitRadius + logoSize / 2 + 30;
+                
+                globalCenterY = topPadding + requiredSpace;
+            } else {
+                // 데스크톱: 컨테이너 중앙
+                globalCenterY = 700;
+            }
+            
+            const offsetY = globalCenterY - height / 2;
+            document.documentElement.style.setProperty('--orbit-offset-y', `${offsetY}px`);
+        }
+
+        function updatePlanets() {
+            planetOrbits.forEach(p => p.update());
+            requestAnimationFrame(updatePlanets);
+        }
+
+        updateOrbitalCenter();
+        updatePlanets();
+
+        // 푸터 고무줄 효과
+        const footerText = document.getElementById('footerText');
+        const originalText = footerText.textContent;
+        footerText.innerHTML = originalText.split('').map(char => 
+            char === ' ' ? '<span style="display:inline-block;width:0.3em;"></span>' : 
+            `<span>${char}</span>`
+        ).join('');
+
+        const spans = footerText.querySelectorAll('span');
+
+        function updateFooterElastic() {
+            spans.forEach((span) => {
+                const rect = span.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const distX = mouseX - centerX;
+                const distY = mouseY - centerY;
+                const distance = Math.sqrt(distX * distX + distY * distY);
+
+                if (distance < 200) {
+                    const force = (200 - distance) / 200;
+                    const pullX = distX * force * 0.3;
+                    const pullY = distY * force * 0.3;
+                    
+                    span.style.transform = `translate(${pullX}px, ${pullY}px)`;
+                } else {
+                    span.style.transform = 'translate(0, 0)';
+                }
+            });
+
+            requestAnimationFrame(updateFooterElastic);
+        }
+
+        updateFooterElastic();
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const radii = getOrbitRadii();
+                planetOrbits[0].orbitRadius = radii[0];
+                planetOrbits[1].orbitRadius = radii[0];
+                planetOrbits[2].orbitRadius = radii[1];
+                planetOrbits[3].orbitRadius = radii[1];
+                planetOrbits[4].orbitRadius = radii[2];
+                planetOrbits[5].orbitRadius = radii[2];
+                
+                updateOrbitalCenter();
+            }, 300);
+        });
+
+        // 데이터
+        const galleryData = {
+            'ai-gallery': {
+                title: 'AI 갤러리',
+                items: [
+                    { emoji: '🎨', title: 'AI 이미지 생성', author: '김철수', desc: 'Midjourney를 활용한 건축 컨셉 디자인' },
+                    { emoji: '🎬', title: '영상 편집 자동화', author: '이영희', desc: 'AI 기반 영상 편집 프로세스 개선' },
+                    { emoji: '✨', title: '프롬프트 최적화', author: '박민수', desc: 'ChatGPT 프롬프트 엔지니어링' },
+                    { emoji: '🖼️', title: 'AI 아트 실험', author: '최지원', desc: '생성형 AI 예술 작품' },
+                    { emoji: '🌟', title: '스타일 트랜스퍼', author: '정민호', desc: '이미지 스타일 변환' },
+                    { emoji: '🎭', title: '캐릭터 생성', author: '강서연', desc: 'AI 캐릭터 디자인' }
+                ]
+            },
+            'card-news': {
+                title: '카드뉴스',
+                items: [
+                    { emoji: '📰', title: 'AI 트렌드 2026', author: '운영진', desc: '주목할 AI 기술 5가지' },
+                    { emoji: '💡', title: 'ChatGPT 활용법', author: '운영진', desc: '업무 실전 팁' },
+                    { emoji: '🔍', title: 'AI 도구 비교', author: '운영진', desc: '용도별 도구 가이드' },
+                    { emoji: '📊', title: 'AI 성과 분석', author: '운영진', desc: '2026 도입 효과' },
+                    { emoji: '🚀', title: '신기술 소개', author: '운영진', desc: '최신 AI 모델' },
+                    { emoji: '💻', title: '노코드 AI', author: '운영진', desc: '코딩 없이 활용' }
+                ]
+            },
+            'play-day': {
+                title: 'Play Day',
+                items: [
+                    { emoji: '🚀', title: '1회차: AI 챗봇', author: '전체', desc: '챗봇 프로토타입 개발' },
+                    { emoji: '🎯', title: '2회차: 이미지 인식', author: '전체', desc: '인식 모델 실험' },
+                    { emoji: '💻', title: '3회차: 문서 요약', author: '전체', desc: '자동 요약 시스템' },
+                    { emoji: '🎨', title: '4회차: 디자인 자동화', author: '전체', desc: 'AI 디자인 자동화' },
+                    { emoji: '📈', title: '5회차: 데이터 분석', author: '전체', desc: 'AI 대시보드' },
+                    { emoji: '🎤', title: '6회차: 음성 인식', author: '전체', desc: '음성-텍스트 변환' }
+                ]
+            }
+        };
+
+        const contentData = {
+            'board': {
+                title: '게시판',
+                items: [
+                    { title: '신규 서비스 오픈', date: '2026.02.15', desc: 'AI 디자인랩 웹사이트 오픈', tags: ['공지'], fileUrl: '#' },
+                    { title: 'ACE 멤버 모집', date: '2026.02.10', desc: '2026 상반기 멤버 모집', tags: ['모집'], fileUrl: '#' },
+                    { title: '워크샵 안내', date: '2026.02.05', desc: 'AI 워크샵 일정', tags: ['워크샵'], fileUrl: '#' },
+                    { title: 'AI 컨퍼런스', date: '2026.01.28', desc: '글로벌 컨퍼런스 후기', tags: ['후기'], fileUrl: '#' },
+                    { title: '월간 성과', date: '2026.01.20', desc: '1월 활동 성과', tags: ['보고'], fileUrl: '#' }
+                ]
+            },
+            'help-ace': { title: '도와줘요 ACE!', isForm: true },
+            'playbook': {
+                title: 'Playbook',
+                items: [
+                    { title: '2026년 2월', date: '2026.02.01', desc: 'AI 이미지 생성 가이드', tags: ['가이드'], fileUrl: '#' },
+                    { title: '2026년 1월', date: '2026.01.01', desc: 'ChatGPT 활용 매뉴얼', tags: ['가이드'], fileUrl: '#' },
+                    { title: '2025년 12월', date: '2025.12.01', desc: '프롬프트 엔지니어링', tags: ['가이드'], fileUrl: '#' }
+                ]
+            }
+        };
+
+        let currentGalleryData = [];
+
+        function openGalleryModal(type) {
+            const data = galleryData[type];
+            currentGalleryData = data.items;
+            document.getElementById('galleryModalTitle').textContent = data.title;
+            
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = data.items.map((item, i) => `
+                <div class="gallery-item">
+                    <div onclick="openSlideView(${i})" style="cursor: pointer;">
+                        <div class="gallery-item-image">${item.emoji}</div>
+                        <div class="gallery-item-content">
+                            <div class="gallery-item-title">${item.title}</div>
+                            <div class="gallery-item-author">작성자: ${item.author}</div>
+                            <div class="gallery-item-desc">${item.desc}</div>
+                        </div>
+                    </div>
+                    <div class="item-actions" onclick="event.stopPropagation()">
+                        <button class="action-btn" onclick="toggleLike(this, '${type}', ${i})">
+                            <span class="action-icon">🤍</span>
+                            <span class="action-count">0</span>
+                        </button>
+                        <button class="action-btn" onclick="toggleBookmark(this, '${type}', ${i})">
+                            <span class="action-icon">🔖</span>
+                        </button>
+                        <button class="action-btn" onclick="downloadFile('${type}', ${i})">
+                            <span class="action-icon">📥</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('galleryModal').classList.add('active');
+        }
+
+        function openContentModal(type) {
+            const data = contentData[type];
+            document.getElementById('contentModalTitle').textContent = data.title;
+            const view = document.getElementById('contentView');
+            
+            if (data.isForm) {
+                view.innerHTML = `
+                    <div class="form-container">
+                        <h3 style="margin-bottom: 26px; font-size: 24px; font-weight: 700;">AI 관련 SOS</h3>
+                        <div class="form-group">
+                            <label class="form-label">제목</label>
+                            <input type="text" class="form-input" placeholder="예: 계약서 분석 자동화">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">희망 방문일</label>
+                            <input type="date" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">내용</label>
+                            <textarea class="form-textarea" placeholder="AI 적용이 필요한 업무와 기대효과"></textarea>
+                        </div>
+                        <button class="form-button">신청하기</button>
+                    </div>
+                    <h3 style="margin-bottom: 22px; font-size: 20px; font-weight: 700;">최근 신청</h3>
+                    <div class="content-list">
+                        <div class="content-item">
+                            <div class="content-item-header">
+                                <div class="content-item-title">계약서 분석 자동화</div>
+                                <div class="content-item-date">2026.02.10</div>
+                            </div>
+                            <div class="content-item-desc">PDF 계약서 자동 분석</div>
+                            <div class="content-item-meta"><span class="content-tag">답변 완료</span></div>
+                            <div class="item-actions">
+                                <button class="action-btn" onclick="toggleLike(this, 'help-ace', 0)">
+                                    <span class="action-icon">🤍</span>
+                                    <span class="action-count">0</span>
+                                </button>
+                                <button class="action-btn" onclick="toggleBookmark(this, 'help-ace', 0)">
+                                    <span class="action-icon">🔖</span>
+                                </button>
+                                <button class="action-btn" onclick="downloadFile('help-ace', 0)">
+                                    <span class="action-icon">📥</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                view.innerHTML = `
+                    <div class="content-list">
+                        ${data.items.map((item, i) => `
+                            <div class="content-item">
+                                <div class="content-item-header">
+                                    <div class="content-item-title">${item.title}</div>
+                                    <div class="content-item-date">${item.date}</div>
+                                </div>
+                                <div class="content-item-desc">${item.desc}</div>
+                                ${item.tags ? `<div class="content-item-meta">${item.tags.map(t => `<span class="content-tag">${t}</span>`).join('')}</div>` : ''}
+                                <div class="item-actions">
+                                    <button class="action-btn" onclick="toggleLike(this, '${type}', ${i})">
+                                        <span class="action-icon">🤍</span>
+                                        <span class="action-count">0</span>
+                                    </button>
+                                    <button class="action-btn" onclick="toggleBookmark(this, '${type}', ${i})">
+                                        <span class="action-icon">🔖</span>
+                                    </button>
+                                    <button class="action-btn" onclick="downloadFile('${type}', ${i})">
+                                        <span class="action-icon">📥</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            document.getElementById('contentModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        let currentSlideIndex = 0;
+
+        function openSlideView(index) {
+            currentSlideIndex = index;
+            renderSlide();
+            document.getElementById('slideView').classList.add('active');
+        }
+
+        function closeSlideView() {
+            document.getElementById('slideView').classList.remove('active');
+        }
+
+        function renderSlide() {
+            const item = currentGalleryData[currentSlideIndex];
+            document.getElementById('slideContent').innerHTML = `
+                <div class="slide-image">${item.emoji}</div>
+                <div class="slide-title">${item.title}</div>
+                <div class="slide-author">작성자: ${item.author}</div>
+                <div class="slide-description">${item.desc}</div>
+                <div class="slide-actions">
+                    <button class="slide-action-btn" onclick="toggleLike(this, 'slide', ${currentSlideIndex})">
+                        <span class="action-icon">🤍</span>
+                        <span class="action-count">0</span>
+                    </button>
+                    <button class="slide-action-btn" onclick="toggleBookmark(this, 'slide', ${currentSlideIndex})">
+                        <span class="action-icon">🔖</span>
+                    </button>
+                    <button class="slide-action-btn" onclick="downloadFile('slide', ${currentSlideIndex})">
+                        <span class="action-icon">📥</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                renderSlide();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < currentGalleryData.length - 1) {
+                currentSlideIndex++;
+                renderSlide();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('slideView').classList.contains('active')) {
+                if (e.key === 'Escape') closeSlideView();
+                if (e.key === 'ArrowLeft') prevSlide();
+                if (e.key === 'ArrowRight') nextSlide();
+            }
+            if (e.key === 'Escape') {
+                closeModal('galleryModal');
+                closeModal('contentModal');
+            }
+        });
+
+        // 터치 스와이프
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.getElementById('slideView').addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        document.getElementById('slideView').addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                nextSlide();
+            }
+            if (touchEndX > touchStartX + swipeThreshold) {
+                prevSlide();
+            }
+        }
+
+        // 액션 버튼 기능
+        function toggleLike(button, type, index) {
+            const icon = button.querySelector('.action-icon');
+            const count = button.querySelector('.action-count');
+            
+            if (button.classList.contains('active')) {
+                button.classList.remove('active');
+                icon.textContent = '🤍';
+                count.textContent = parseInt(count.textContent) - 1;
+            } else {
+                button.classList.add('active');
+                icon.textContent = '❤️';
+                count.textContent = parseInt(count.textContent) + 1;
+            }
+            
+            console.log(`좋아요 토글: ${type}, 인덱스: ${index}`);
+        }
+
+        function toggleBookmark(button, type, index) {
+            const icon = button.querySelector('.action-icon');
+            
+            if (button.classList.contains('active')) {
+                button.classList.remove('active');
+                icon.textContent = '🔖';
+                console.log(`북마크 제거: ${type}, 인덱스: ${index}`);
+            } else {
+                button.classList.add('active');
+                icon.textContent = '📌';
+                console.log(`북마크 추가: ${type}, 인덱스: ${index}`);
+                alert('저장되었습니다! "저장한 페이지"에서 확인하실 수 있습니다.');
+            }
+        }
+
+        function downloadFile(type, index) {
+            let fileUrl = '#';
+            let fileName = 'file.pdf';
+            
+            if (galleryData[type]) {
+                const item = galleryData[type].items[index];
+                fileName = `${item.title}.pdf`;
+            } else if (contentData[type]) {
+                const item = contentData[type].items[index];
+                fileName = `${item.title}.pdf`;
+                fileUrl = item.fileUrl || '#';
+            }
+            
+            console.log(`파일 다운로드: ${type}, 인덱스: ${index}, 파일명: ${fileName}`);
+            alert(`"${fileName}" 다운로드가 시작됩니다.\n\n(실제 파일은 서버에 업로드된 후 다운로드됩니다)`);
+        }
+    </script>
+</body>
+</html>
